@@ -17,12 +17,13 @@ const Yml = 'docker-compose.yml'; // how to avoid manual update of this?
 const MAX_CHECK_COUNT = 10;
 let serverProcess;
 
-function startServer(port) {
+function startServer(foundPort) {
   const platform = process.platform;
 
   const server = `${path.join(app.getAppPath(), '..', '..', Yml)}`;
   // logger.info(`Launching server with docker-compose ${server} at port ${port}...`);
   //TODO 实现寻找主端口，需要传递到compose 文件中。
+  //TODO 实现传递-e参数到compose进程。
   logger.info(`Launching server with docker-compose ${server} ...`);
 
   serverProcess = require('child_process')
@@ -110,15 +111,15 @@ app.on('ready', function () {
 
   if (isDev) {
     // Assume the webpack dev server is up at port 3000  
-    loadHomePage(customize.homeUrl,customize.healthUrl);
+    loadHomePage(customize.homeUrl(customize.defaultPort),customize.healthUrl(customize.defaultPort));
   } else {
     // Start server at an available port (prefer 8080)
-    findPort(8080, function (err, port) {
+    findPort(customize.defaultPort, function (err, port) {
       logger.info(`Starting server at port ${port}`)
       startServer(port);
       // loadHomePage(`http://localhost:${port}`)
       //TODO findport 暂没有生效
-      loadHomePage(customize.homeUrl,customize.healthUrl)
+      loadHomePage(customize.homeUrl(port),customize.healthUrl(port));
     });
   }
 });

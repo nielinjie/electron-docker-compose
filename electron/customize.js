@@ -1,5 +1,11 @@
-const homeUrl = `http://localhost:3000`
+const homeUrl = 'http://localhost'
 module.exports = {
-    homeUrl:homeUrl,
-    healthUrl:homeUrl,
+    defaultPort: 3000,
+    homeUrl:function(foundPort){
+        return `${homeUrl}:${foundPort}`
+    },
+    healthUrl:function(foundPort){
+        return `${homeUrl}:${foundPort}`
+    },
+    //TODO: 增加传入到compose文件的e的定制化。
 }

@@ -1,0 +1,29 @@
+# 一般的标准的compose文件
+# 通过-e参数跟electorn通信，electron可以提供一些平台相关的参数，比如找到可用的port，找到操作系统分配给app的目录。
+version: '3.3'
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+        # 可以替换为${PLATFORM_DATA_PATH} 
+        # 注意docker本身对path的权限，如果用的是docker-desktop，可以在Preferences里面设置。
+      - /data/wordpress_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: somewordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+ 
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:latest
+    ports:
+      #可以替换为${FOUND_PORT}
+      - "8000:80"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
