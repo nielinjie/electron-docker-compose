@@ -4,6 +4,7 @@ const url = require('url');
 var findPort = require("find-free-port");
 const isDev = require('electron-is-dev');
 const logger = require('./logger');
+const customize = require('./customize');
 
 const { app, BrowserWindow, dialog } = electron;
 
@@ -12,18 +13,20 @@ const { app, BrowserWindow, dialog } = electron;
 let mainWindow;
 
 // The server process
-const JAR = 'spring-1.0.0.jar'; // how to avoid manual update of this?
+const Yml = 'docker-compose.yml'; // how to avoid manual update of this?
 const MAX_CHECK_COUNT = 10;
 let serverProcess;
 
 function startServer(port) {
   const platform = process.platform;
 
-  const server = `${path.join(app.getAppPath(), '..', '..', JAR)}`;
-  logger.info(`Launching server with jar ${server} at port ${port}...`);
+  const server = `${path.join(app.getAppPath(), '..', '..', Yml)}`;
+  // logger.info(`Launching server with docker-compose ${server} at port ${port}...`);
+  //TODO 实现寻找主端口，需要传递到compose 文件中。
+  logger.info(`Launching server with docker-compose ${server} ...`);
 
   serverProcess = require('child_process')
-    .spawn('java', [ '-jar', server, `--server.port=${port}`]);
+    .spawn('docker-compose', ['-f', server, 'up']);
 
   serverProcess.stdout.on('data', logger.server);
 
@@ -47,6 +50,7 @@ function createWindow() {
 
   // and load the splash screen of the app
   mainWindow.loadURL(url.format({
+    //TODO 可以有个比较动态的splash，有个vue的程序可以动态看到docker-compose的启动，可以学习下。
     pathname: path.join(__dirname, 'splash.html'),
     protocol: 'file:',
     slashes: true
@@ -64,13 +68,14 @@ function createWindow() {
   });
 }
 
-function loadHomePage(baseUrl) {
+function loadHomePage(baseUrl, health) {
   logger.info(`Loading home page at ${baseUrl}`);
   // check server health and switch to main page
   checkCount = 0;
   const axios = require('axios');
   setTimeout(function cycle() {
-    axios.get(`${baseUrl}/actuator/health`)
+    //TODO 实现单独的health检查
+    axios.get(health)
       .then(response => {
         mainWindow.loadURL(`${baseUrl}?_=${Date.now()}`);
       })
@@ -104,14 +109,16 @@ app.on('ready', function () {
   createWindow();
 
   if (isDev) {
-    // Assume the webpack dev server is up at port 9000  
-    loadHomePage('http://localhost:3000');
+    // Assume the webpack dev server is up at port 3000  
+    loadHomePage(customize.homeUrl,customize.healthUrl);
   } else {
     // Start server at an available port (prefer 8080)
-    findPort(8080, function(err, port) {
+    findPort(8080, function (err, port) {
       logger.info(`Starting server at port ${port}`)
       startServer(port);
-      loadHomePage(`http://localhost:${port}`)
+      // loadHomePage(`http://localhost:${port}`)
+      //TODO findport 暂没有生效
+      loadHomePage(customize.homeUrl,customize.healthUrl)
     });
   }
 });
@@ -139,9 +146,13 @@ app.on('will-quit', () => {
     const kill = require('tree-kill');
     kill(serverProcess.pid, 'SIGTERM', function (err) {
       logger.info('Server process killed');
-        serverProcess = null;
+      serverProcess = null;
     });
   }
+  const server = `${path.join(app.getAppPath(), '..', '..', Yml)}`;
+  serverProcess = require('child_process')
+    .spawn('docker-compose', ['-f', server, 'down']);
+
 });
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.

@@ -1,11 +1,11 @@
 {
-  "name": "electron-react-spring",
+  "name": "electron-docker-compose",
   "version": "1.0.0",
-  "description": "A minimal starter project for using Electron, React and Spring.",
+  "description": "A minimal starter project for using Electron and Docker(-compose).",
   "author": "Nie, linjie",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nielinjie/electron-react-spring.git"
+    "url": "https://github.com/nielinjie/electron-docker-compose.git"
   },
   "main": "electron/index.js",
   "scripts": {
@@ -17,7 +17,7 @@
   },
   "license": "MIT",
   "build": {
-    "appId": "electron-react-spring",
+    "appId": "electron-docker-compose",
     "files": [
       "electron/**/*",
       "node_modules/**/*",
@@ -35,9 +35,9 @@
     ],
     "extraFiles": [
       {
-        "from": "spring/target",
+        "from": "docker-compose",
         "filter": [
-          "*.jar"
+          "*.yml"
         ]
       }
     ]
